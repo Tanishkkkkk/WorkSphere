@@ -329,7 +329,7 @@ export default function AppPage() {
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-zinc-50 via-blue-50/30 to-zinc-50 dark:from-black dark:via-blue-950/10 dark:to-black">
         <div className="text-center p-8 max-w-md">
-          <div className="relative mx-auto mb-6">
+          <div className="relative mx-auto mb-6 w-20 h-20">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 animate-pulse flex items-center justify-center">
               <Loader2 className="w-10 h-10 animate-spin text-white" />
             </div>
