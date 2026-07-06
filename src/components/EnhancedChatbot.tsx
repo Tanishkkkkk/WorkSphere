@@ -136,6 +136,12 @@ export function EnhancedChatbot({ onMapUpdate, onOpenDetails, onBook, userLocati
     }
   }, [location, getPreciseLocation]);
 
+  useEffect(() => {
+    if (userLocation) {
+      setLocation(userLocation);
+    }
+  }, [userLocation]);
+
   const handleLocationChange = (lat: number, lng: number) => {
     if (lat === 0 && lng === 0) {
       getPreciseLocation();

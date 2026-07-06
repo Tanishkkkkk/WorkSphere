@@ -250,6 +250,10 @@ export default function AppPage() {
             zoom: update.data.zoom,
             animate: update.data.animate !== false,
           });
+          setLocation({
+            latitude: update.data.center.lat,
+            longitude: update.data.center.lng,
+          });
         }
         break;
 
