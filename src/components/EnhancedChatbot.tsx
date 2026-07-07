@@ -138,7 +138,12 @@ export function EnhancedChatbot({ onMapUpdate, onOpenDetails, onBook, userLocati
 
   useEffect(() => {
     if (userLocation) {
-      setLocation(userLocation);
+      setLocation((prev) => {
+        if (prev && prev.lat === userLocation.lat && prev.lng === userLocation.lng) {
+          return prev;
+        }
+        return userLocation;
+      });
     }
   }, [userLocation]);
 
@@ -471,7 +476,7 @@ export function EnhancedChatbot({ onMapUpdate, onOpenDetails, onBook, userLocati
     <div className="flex h-full flex-col bg-white dark:bg-zinc-950">
       <ChatHeader
         onOpenVenueSubmission={() => setShowVenueSubmission(true)}
-        userLocation={userLocation}
+        userLocation={location}
         onLocationChange={handleLocationChange}
         filters={filters}
         showFilters={showFilters}

@@ -60,6 +60,7 @@ const GLOBAL_HUBS = [
 
 export function ChatHeader({
     onOpenVenueSubmission,
+    userLocation,
     onLocationChange,
     filters,
     showFilters,
@@ -74,6 +75,17 @@ export function ChatHeader({
     onShowBookings
 }: ChatHeaderProps) {
     const [isHubOpen, setIsHubOpen] = useState(false);
+
+    const getActiveHubName = () => {
+        if (!userLocation) return "Global Hubs";
+        const matchingHub = GLOBAL_HUBS.find(
+            (hub) =>
+                hub.lat !== 0 &&
+                Math.abs(hub.lat - userLocation.lat) < 0.001 &&
+                Math.abs(hub.lng - userLocation.lng) < 0.001
+        );
+        return matchingHub ? matchingHub.name : "Current Location";
+    };
 
     return (
         <div className="bg-white dark:bg-zinc-950 sticky top-0 z-50 p-4 border-b border-zinc-200 dark:border-zinc-800 shadow-sm transition-all">
@@ -118,7 +130,7 @@ export function ChatHeader({
                             className="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all active:scale-95"
                         >
                             <Globe className="w-3.5 h-3.5 text-blue-500" />
-                            <span className="hidden md:inline">Global Hubs</span>
+                            <span className="hidden md:inline">{getActiveHubName()}</span>
                             <ChevronDown className={`w-3 h-3 transition-transform ${isHubOpen ? 'rotate-180' : ''}`} />
                         </button>
 
