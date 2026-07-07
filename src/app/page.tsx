@@ -5,7 +5,7 @@ import Image from "next/image";
 import {
   MapPin, Wifi, Zap, Volume2, Clock, Sparkles, Download,
   ArrowRight, Coffee, Camera, Radio, Star, Users, Building2,
-  ChevronRight, Globe, FileText, BarChart3
+  ChevronRight, Globe, FileText, BarChart3, ArrowUp
 } from "lucide-react";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
@@ -308,6 +308,17 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Scroll to Top Button */}
+      {scrollY > 300 && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-6 left-6 z-50 p-3 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-110 active:scale-95 transition-all duration-300 border border-white/10 cursor-pointer group"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
+        </button>
+      )}
     </div>
   );
 }
