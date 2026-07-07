@@ -1,7 +1,7 @@
 name: Auto Thank on Merge
 
 on:
-  pull_request:
+  pull_request_target:
     types: [closed]
 
 permissions:
@@ -18,11 +18,75 @@ jobs:
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
+            const pr = context.payload.pull_request;
+            
+            // 1. Fetch files changed in this PR
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            
+            let hasUI = false;
+            let hasBackend = false;
+            let hasTests = false;
+            let fileCount = files.length;
+            
+            for (const file of files) {
+              const filename = file.filename;
+              if (filename.includes('__tests__/') || filename.endsWith('.test.ts') || filename.endsWith('.test.tsx')) {
+                hasTests = true;
+              } else if (
+                filename.startsWith('src/components/') || 
+                (filename.startsWith('src/app/') && !filename.includes('/api/') && (filename.endsWith('.tsx') || filename.endsWith('.css')))
+              ) {
+                hasUI = true;
+              } else if (
+                filename.startsWith('src/app/api/') || 
+                filename.startsWith('prisma/') || 
+                filename.startsWith('src/lib/') || 
+                filename === 'src/middleware.ts'
+              ) {
+                hasBackend = true;
+              }
+            }
+
+            const labelsToAdd = [];
+            const bonusDetails = [];
+            
+            if (hasUI && (pr.additions > 15 || fileCount > 2)) {
+              labelsToAdd.push('good-ui');
+              bonusDetails.push('🎨 **good-ui** (+25 XP) - for frontend/UI improvements');
+            }
+            if (hasBackend && (pr.additions > 20 || fileCount > 2)) {
+              labelsToAdd.push('good-backend');
+              bonusDetails.push('⚙️ **good-backend** (+50 XP) - for backend/API or DB improvements');
+            }
+            if (hasTests || (pr.body && pr.body.length > 100 && pr.additions > 10)) {
+              labelsToAdd.push('good-pr');
+              bonusDetails.push('📝 **good-pr** (+15 XP) - for high-quality contributions with testing or details');
+            }
+            
+            if (labelsToAdd.length > 0) {
+              console.log(`Auto-assigning bonus labels on merge for PR #${prNumber}: ${labelsToAdd.join(', ')}`);
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                labels: labelsToAdd
+              });
+            }
+
+            let bonusSection = '';
+            if (bonusDetails.length > 0) {
+              bonusSection = `\n\n### 🏆 Bonus XP Awarded!\nBased on our automated review, we have applied the following bonus labels to your PR:\n${bonusDetails.map(d => `- ${d}`).join('\n')}\n\nThese will be picked up by the ECSOC Sentinel scoring system shortly!`;
+            }
+
             const thankComment = `🎉 Congratulations!
 
             Your contribution has been merged.
 
-            Thank you for improving WorkSphere.`;
+            Thank you for improving WorkSphere.${bonusSection}`;
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,

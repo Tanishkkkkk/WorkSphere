@@ -3,7 +3,7 @@ name: Welcome & Initial PR Triaging
 on:
   issues:
     types: [opened]
-  pull_request:
+  pull_request_target:
     types: [opened]
 
 permissions:
@@ -52,8 +52,72 @@ jobs:
               body: issueComment
             });
 
+            // Auto-classify issue type based on title and body content
+            const title = (context.payload.issue.title || '').toLowerCase();
+            const body = (context.payload.issue.body || '').toLowerCase();
+
+            const isBug = 
+              title.includes('bug') || 
+              title.includes('fix') || 
+              title.includes('error') || 
+              title.includes('fail') || 
+              title.includes('crash') ||
+              body.includes('steps to reproduce') || 
+              body.includes('expected behavior') ||
+              body.includes('actual behavior');
+              
+            const isFeature = 
+              title.includes('feature') || 
+              title.includes('feat') || 
+              title.includes('request') || 
+              title.includes('add') ||
+              body.includes('feature request') || 
+              body.includes('describe the solution you\'d like');
+
+            const isDocs = 
+              title.includes('doc') || 
+              title.includes('readme') || 
+              body.includes('documentation') || 
+              body.includes('proposed changes');
+
+            const labelsToAdd = ['ECSoC26', 'needs-review'];
+            if (isBug) {
+              labelsToAdd.push('bug');
+            } else if (isFeature) {
+              labelsToAdd.push('feature-request');
+            } else if (isDocs) {
+              labelsToAdd.push('documentation');
+            }
+
+            // Assess if this is a high-quality, well-documented issue to award "good-issue" (+10 XP)
+            const issueBody = context.payload.issue.body || '';
+            const isDetailed = issueBody.length > 250;
+            const hasGoodStructure = 
+              issueBody.toLowerCase().includes('steps to reproduce') || 
+              issueBody.toLowerCase().includes('expected behavior') || 
+              issueBody.toLowerCase().includes('reproduction') ||
+              issueBody.toLowerCase().includes('alternatives') ||
+              issueBody.toLowerCase().includes('proposed changes');
+
+            if (isDetailed && hasGoodStructure) {
+              labelsToAdd.push('good-issue');
+            }
+
+            console.log(`Auto-classifying issue #${context.issue.number}:`);
+            console.log(`- Title: "${context.payload.issue.title}"`);
+            console.log(`- Detected: isBug=${isBug}, isFeature=${isFeature}, isDocs=${isDocs}`);
+            console.log(`- Good Issue: ${isDetailed && hasGoodStructure}`);
+            console.log(`- Adding labels: ${labelsToAdd.join(', ')}`);
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: labelsToAdd
+            });
+
       - name: Welcome PR Contributor & Triage PR
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request_target' || github.event_name == 'pull_request'
         uses: actions/github-script
         with:
           script: |
