@@ -121,7 +121,6 @@ export async function POST(req: NextRequest) {
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
-
     const { name, latitude, longitude, category, address, wifiQuality, hasOutlets, noiseLevel, hasErgonomic, outletDensity, wifiSpeed } = validation.data;
     const { placeId, rating, imageUrl } = body;
 
