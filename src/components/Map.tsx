@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -12,8 +12,15 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 
+// @ts-expect-error - styles are handled by next built-in CSS loader
 import "leaflet/dist/leaflet.css";
 import { MapMarker, MapRoute, MapView } from "@/types/map";
+
+// Import Leaflet Heatmap Plugin safely only on client-side
+if (typeof window !== "undefined") {
+  // @ts-ignore
+  require("leaflet.heat");
+}
 
 // Custom venue marker for dark theme - purple/blue dot
 const venueIcon = L.divIcon({
@@ -86,11 +93,39 @@ function AutoCenter({
   return null;
 }
 
-const _routeStyles = {
-  highlighted: { color: "#28a745", weight: 7, opacity: 1 }, // Green
-  faded: { color: "#6c757d", weight: 5, opacity: 0.5 }, // Gray
-  normal: { color: "#007bff", weight: 5, opacity: 0.8 }, // Blue
-};
+// Subcomponent to handle rendering the Leaflet heatmap layer seamlessly
+function HeatmapOverlay({ points, visible }: { points: any[]; visible: boolean }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || !visible || points.length === 0) return;
+
+    // Glowing purple/blue gradient zones as outlined in issue parameters
+    const gradient = {
+      0.3: "#1e3a8a", // Deep Blue (Quiet)
+      0.55: "#3b82f6", // Bright Blue (Moderate)
+      0.8: "#8b5cf6",  // Velvet Purple (Busy)
+      1.0: "#d946ef",  // Neon Pink/Fuchsia (High Activity levels)
+    };
+
+    const heatLayer = (L as any).heatLayer(points, {
+      radius: 30,
+      blur: 18,
+      maxZoom: 16,
+      gradient: gradient,
+    });
+
+    heatLayer.addTo(map);
+
+    return () => {
+      if (map && heatLayer) {
+        map.removeLayer(heatLayer);
+      }
+    };
+  }, [map, points, visible]);
+
+  return null;
+}
 
 const Map = ({
   location,
@@ -105,6 +140,24 @@ const Map = ({
 }) => {
   const clerkUser = useUser();
   const { latitude, longitude } = location;
+
+  // Track heatmap states
+  const [showHeatmap, setShowHeatmap] = useState<boolean>(false);
+  const [heatmapPoints, setHeatmapPoints] = useState<any[]>([]);
+
+  // Async load data context when layer UI toggles active
+  useEffect(() => {
+    if (showHeatmap) {
+      fetch("/api/map/heatmap")
+        .then((res) => res.json())
+        .then((resData) => {
+          if (resData.success) {
+            setHeatmapPoints(resData.data);
+          }
+        })
+        .catch((err) => console.error("Could not populate heatmap context", err));
+    }
+  }, [showHeatmap]);
 
   // Derive iconUrl directly from clerkUser state
   const iconUrl = useMemo(() => {
@@ -137,7 +190,7 @@ const Map = ({
   const center: [number, number] = [latitude, longitude];
 
   return (
-    <>
+<>
       <style dangerouslySetInnerHTML={{
         __html: `
         .custom-user-marker {
@@ -170,9 +223,16 @@ const Map = ({
           border-radius: 12px;
         }
         
-        /* Dark theme filter for map tiles - keeps labels readable */
-        .leaflet-tile-pane {
+        /* UPDATED: Target map tiles specifically so they don't hide the heatmap canvas */
+        .leaflet-layer {
           filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+        }
+
+        /* NEW: Keeps the glowing canvas layer clean and visible */
+        .leaflet-heatmap-layer {
+          z-index: 400 !important;
+          mix-blend-mode: screen;
+          filter: none !important; /* Forces the browser to keep full color saturation */
         }
         
         /* Venue marker - circular dot */
@@ -219,6 +279,14 @@ const Map = ({
         .leaflet-popup-content {
           margin: 12px 16px;
         }
+        
+        /* Floating toggle position above canvas layers */
+        .map-heatmap-toggle {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          z-index: 1000;
+        }
       `}} />
 
       <MapContainer
@@ -228,9 +296,23 @@ const Map = ({
           width: "95%",
           height: "95%",
           borderRadius: "12px",
+          position: "relative"
         }}
       >
-        {/* Dark theme with readable city names - Jawg Dark */}
+        <div className="map-heatmap-toggle">
+          <button
+            type="button"
+            onClick={() => setShowHeatmap(!showHeatmap)}
+            className={`px-4 py-2 text-xs font-semibold rounded-lg shadow-md border transition-all duration-200 ${
+              showHeatmap
+                ? "bg-purple-600 text-white border-purple-500 hover:bg-purple-700"
+                : "bg-zinc-900 text-zinc-300 border-zinc-700 hover:bg-zinc-800"
+            }`}
+          >
+            {showHeatmap ? "📍 Show Venue Markers" : "🔥 Show Live Crowd Heatmap"}
+          </button>
+        </div>
+
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -244,6 +326,66 @@ const Map = ({
             <Popup>You are here!</Popup>
           </Marker>
         )}
+
+
+        {showHeatmap ? (
+          <HeatmapOverlay points={heatmapPoints} visible={showHeatmap} />
+        ) : (
+          markers
+            .filter((marker) => marker && marker.position && marker.position.lat != null && marker.position.lng != null && !isNaN(Number(marker.position.lat)) && !isNaN(Number(marker.position.lng)))
+            .map((marker) => (
+              <Marker
+                key={marker.id}
+                position={[Number(marker.position.lat), Number(marker.position.lng)]}
+                icon={marker.id.includes("dest") ? destinationIcon : venueIcon}
+              >
+                <Popup>
+                  <div className="text-sm">
+                    <div className="font-semibold text-white">{marker.name}</div>
+                    {marker.category && (
+                      <div className="text-zinc-400">{marker.category}</div>
+                    )}
+                    {marker.address && (
+                      <div className="text-zinc-500 text-xs mt-1">{marker.address}</div>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            ))
+        )}
+
+        {routes.map((route) => {
+          const validPositions = (route.path || [])
+            .filter((p) => p && p.lat != null && p.lng != null && !isNaN(Number(p.lat)) && !isNaN(Number(p.lng)))
+            .map((p) => [Number(p.lat), Number(p.lng)] as [number, number]);
+
+          if (validPositions.length < 2) return null;
+
+          return (
+            <Polyline
+              key={route.id}
+              positions={validPositions}
+              pathOptions={{
+                color: "#22c55e",
+                weight: 6,
+                opacity: 0.9,
+                lineCap: "round",
+                lineJoin: "round",
+              }}
+            >
+              {route.distance && (
+                <Popup>
+                  <div className="text-sm">
+                    Distance: {(route.distance / 1000).toFixed(1)} km
+                    {route.duration && (
+                      <div>Time: {Math.round(route.duration / 60)} min</div>
+                    )}
+                  </div>
+                </Popup>
+              )}
+            </Polyline>
+          );
+        })}
 
         {markers.map((marker) => (
           <Marker
