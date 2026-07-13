@@ -425,6 +425,14 @@ function AppPage() {
     hasErgonomic: boolean;
     outletDensity: "every_table" | "some_tables" | "wall_seats" | "none";
     wifiSpeed?: number;
+    downloadSpeed?: number;
+    uploadSpeed?: number;
+    latency?: number;
+    crowdLevel?: string;
+    downloadSpeed?: number;
+    uploadSpeed?: number;
+    latency?: number;
+    crowdLevel?: string;
   }) => {
     if (!ratingDialog.venue) return;
 
@@ -434,6 +442,10 @@ function AppPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...rating,
+          downloadSpeed: rating.downloadSpeed,
+          uploadSpeed: rating.uploadSpeed,
+          latency: rating.latency,
+          crowdLevel: rating.crowdLevel,
           venue: {
             placeId: ratingDialog.venue.id,
             name: ratingDialog.venue.name,
@@ -636,7 +648,8 @@ function AppPage() {
               position: { lat: v.lat, lng: v.lng },
               category: v.category,
               address: v.address,
-              amenities: { wifi: v.wifi, outlets: v.hasOutlets, quiet: v.noiseLevel === "quiet" }
+              amenities: { wifi: v.wifi, outlets: v.hasOutlets, quiet: v.noiseLevel === "quiet" },
+              wifiSpeed: v.wifiSpeed,
             }
           });
           // Close the venue detail dialog

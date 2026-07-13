@@ -752,7 +752,11 @@ export function VenueDetailDialog({
                           tickLine={false}
                           tick={{ fontSize: 10, fill: "#888" }}
                         />
-                        <YAxis hide domain={[0, "dataMax + 10"]} />
+                        <YAxis
+                          tickFormatter={(value) => `${value} Mbps`}
+                          tick={{ fontSize: 10, fill: "#888" }}
+                          width={40}
+                        />
                         <Tooltip
                           cursor={{ fill: "rgba(0,0,0,0.05)" }}
                           content={({ active, payload }) => {
@@ -764,7 +768,13 @@ export function VenueDetailDialog({
                                     {data.time}
                                   </p>
                                   <p className="text-sm font-bold text-blue-600">
-                                    {data.speed} Mbps
+                                    {data.download} Mbps (Download)
+                                  </p>
+                                  <p className="text-sm font-bold text-green-600">
+                                    {data.upload} Mbps (Upload)
+                                  </p>
+                                  <p className="text-sm font-bold text-orange-600">
+                                    {data.latency} ms (Latency)
                                   </p>
                                   <p className="text-[10px] uppercase tracking-wider text-zinc-400 mt-1">
                                     Crowd: {data.crowd}
@@ -776,9 +786,22 @@ export function VenueDetailDialog({
                           }}
                         />
                         <Bar
-                          dataKey="speed"
+                          dataKey="download"
                           fill="#3b82f6"
                           radius={[4, 4, 0, 0]}
+                          name="Download"
+                        />
+                        <Bar
+                          dataKey="upload"
+                          fill="#22c55e"
+                          radius={[4, 4, 0, 0]}
+                          name="Upload"
+                        />
+                        <Bar
+                          dataKey="latency"
+                          fill="#f97316"
+                          radius={[4, 4, 0, 0]}
+                          name="Latency"
                         />
                       </BarChart>
                     </ResponsiveContainer>

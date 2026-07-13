@@ -21,6 +21,10 @@ interface VenueRatingDialogProps {
     hasErgonomic: boolean;
     outletDensity: "every_table" | "some_tables" | "wall_seats" | "none";
     wifiSpeed?: number;
+    downloadSpeed?: number;
+    uploadSpeed?: number;
+    latency?: number;
+    crowdLevel?: string;
     lighting?:
       "natural_daylight" | "warm_ambient" | "fluorescent" | "bright_white";
     speedtestPhoto?: string;
@@ -54,6 +58,10 @@ export function VenueRatingDialog({
     "every_table" | "some_tables" | "wall_seats" | "none"
   >("none");
   const [wifiSpeed, setWifiSpeed] = useState("");
+  const [downloadSpeed, setDownloadSpeed] = useState("");
+  const [uploadSpeed, setUploadSpeed] = useState("");
+  const [latency, setLatency] = useState("");
+  const [crowdLevel, setCrowdLevel] = useState<string>("unknown");
   const [speedtestPhoto, setSpeedtestPhoto] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -158,6 +166,10 @@ export function VenueRatingDialog({
         hasErgonomic,
         outletDensity,
         wifiSpeed: wifiSpeed ? parseInt(wifiSpeed, 10) : undefined,
+        downloadSpeed: downloadSpeed ? parseInt(downloadSpeed, 10) : undefined,
+        uploadSpeed: uploadSpeed ? parseInt(uploadSpeed, 10) : undefined,
+        latency: latency ? parseInt(latency, 10) : undefined,
+        crowdLevel: crowdLevel === "unknown" ? undefined : crowdLevel,
         lighting: lighting || undefined,
         speedtestPhoto: speedtestPhoto || undefined,
         hasPhoneBooths,
@@ -177,6 +189,10 @@ export function VenueRatingDialog({
       setHasErgonomic(false);
       setOutletDensity("none");
       setWifiSpeed("");
+      setDownloadSpeed("");
+      setUploadSpeed("");
+      setLatency("");
+      setCrowdLevel("unknown");
       setSpeedtestPhoto(null);
       setHasPhoneBooths(false);
       setHasNoMusic(false);
@@ -399,6 +415,62 @@ export function VenueRatingDialog({
               placeholder="e.g. 80"
               className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800"
             />
+          </section>
+
+          <section>
+            <label className="mb-2 block text-sm font-medium">
+              Download Speed (Mbps - Optional)
+            </label>
+            <input
+              type="number"
+              value={downloadSpeed}
+              onChange={(event) => setDownloadSpeed(event.target.value)}
+              placeholder="e.g. 100"
+              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800"
+            />
+          </section>
+
+          <section>
+            <label className="mb-2 block text-sm font-medium">
+              Upload Speed (Mbps - Optional)
+            </label>
+            <input
+              type="number"
+              value={uploadSpeed}
+              onChange={(event) => setUploadSpeed(event.target.value)}
+              placeholder="e.g. 50"
+              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800"
+            />
+          </section>
+
+          <section>
+            <label className="mb-2 block text-sm font-medium">
+              Latency (ms - Optional)
+            </label>
+            <input
+              type="number"
+              value={latency}
+              onChange={(event) => setLatency(event.target.value)}
+              placeholder="e.g. 20"
+              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800"
+            />
+          </section>
+
+          <section>
+            <label className="mb-2 block text-sm font-medium">
+              Crowd Level (Optional)
+            </label>
+            <select
+              value={crowdLevel}
+              onChange={(event) => setCrowdLevel(event.target.value)}
+              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800"
+            >
+              <option value="unknown">Select Crowd Level</option>
+              <option value="empty">Empty</option>
+              <option value="moderate">Moderate</option>
+              <option value="busy">Busy</option>
+              <option value="very busy">Very Busy</option>
+            </select>
           </section>
 
           {/* Speedtest Photo Upload */}

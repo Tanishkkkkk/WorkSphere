@@ -91,6 +91,10 @@ export const venueRatingSchema = z.object({
     .optional()
     .default("none"),
   wifiSpeed: z.number().min(0).max(10000).optional().nullable(),
+  downloadSpeed: z.number().min(0).max(10000).optional().nullable(),
+  uploadSpeed: z.number().min(0).max(10000).optional().nullable(),
+  latency: z.number().min(0).max(1000).optional().nullable(),
+  crowdLevel: z.enum(["empty", "moderate", "busy", "very busy"]).optional().nullable(),
   speedtestPhoto: z.string().optional().nullable(),
   avgDecibels: z.number().min(20).max(130).optional().nullable(),
   peakDecibels: z.number().min(20).max(140).optional().nullable(),
