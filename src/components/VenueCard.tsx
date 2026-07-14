@@ -26,6 +26,7 @@ import {
   CircleDollarSign,
   Bike,
   Shield,
+  PawPrint,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -155,6 +156,27 @@ export function VenueCard({
       hidden: false,
       userVote: null,
     },
+    petsAllowedIndoors: {
+      confidenceScore: 100,
+      upvotes: 0,
+      downvotes: 0,
+      hidden: false,
+      userVote: null,
+    },
+    dogFriendly: {
+      confidenceScore: 100,
+      upvotes: 0,
+      downvotes: 0,
+      hidden: false,
+      userVote: null,
+    },
+    catsAllowed: {
+      confidenceScore: 100,
+      upvotes: 0,
+      downvotes: 0,
+      hidden: false,
+      userVote: null,
+    },
   });
 
   // Load real vote metrics from the database on mount
@@ -185,7 +207,10 @@ export function VenueCard({
       | "freeStreetParking"
       | "paidGarage"
       | "bicycleRack"
-      | "secureMotorcycleParking",
+      | "secureMotorcycleParking"
+      | "petsAllowedIndoors"
+      | "dogFriendly"
+      | "catsAllowed",
     isUpvote: boolean,
   ) => {
     try {
@@ -757,6 +782,108 @@ export function VenueCard({
               </div>
             )}
 
+            {/* Pets Allowed Tag */}
+            {!voteMetrics.petsAllowedIndoors.hidden && (
+              <div
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs transition-all ${
+                  voteMetrics.petsAllowedIndoors.confidenceScore < 60
+                    ? "border-amber-500/30 bg-amber-500/5 text-amber-500"
+                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
+                }`}
+              >
+                <PawPrint className="w-3.5 h-3.5 text-orange-500" />
+                <span className="font-medium font-mono text-[11px]">
+                  Pets Allowed ({voteMetrics.petsAllowedIndoors.confidenceScore}
+                  %)
+                </span>
+
+                <div className="ml-1 flex items-center border-l border-zinc-300 dark:border-zinc-700 pl-1.5 gap-1 text-[10px]">
+                  <button
+                    onClick={() =>
+                      submitAmenityVote("petsAllowedIndoors", true)
+                    }
+                    className={`transition-colors ${voteMetrics.petsAllowedIndoors.userVote === true ? "text-green-500" : "hover:text-green-500"}`}
+                  >
+                    👍
+                  </button>
+                  <button
+                    onClick={() =>
+                      submitAmenityVote("petsAllowedIndoors", false)
+                    }
+                    className={`transition-colors ${voteMetrics.petsAllowedIndoors.userVote === false ? "text-red-500" : "hover:text-red-500"}`}
+                  >
+                    👎
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Dog Friendly Tag */}
+            {!voteMetrics.dogFriendly.hidden && (
+              <div
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs transition-all ${
+                  voteMetrics.dogFriendly.confidenceScore < 60
+                    ? "border-amber-500/30 bg-amber-500/5 text-amber-500"
+                    : voteMetrics.dogFriendly.upvotes >= 5
+                      ? "border-green-500/30 bg-green-500/5 text-green-700 dark:text-green-400 font-bold"
+                      : "border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
+                }`}
+              >
+                <span>
+                  🐶 Dog Friendly {voteMetrics.dogFriendly.upvotes >= 5 && "⭐"}{" "}
+                  ({voteMetrics.dogFriendly.confidenceScore}%)
+                </span>
+
+                <div className="ml-1 flex items-center border-l border-zinc-300 dark:border-zinc-700 pl-1.5 gap-1 text-[10px]">
+                  <button
+                    onClick={() => submitAmenityVote("dogFriendly", true)}
+                    className={`transition-colors ${voteMetrics.dogFriendly.userVote === true ? "text-green-500" : "hover:text-green-500"}`}
+                  >
+                    👍
+                  </button>
+                  <button
+                    onClick={() => submitAmenityVote("dogFriendly", false)}
+                    className={`transition-colors ${voteMetrics.dogFriendly.userVote === false ? "text-red-500" : "hover:text-red-500"}`}
+                  >
+                    👎
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Cats Allowed Tag */}
+            {!voteMetrics.catsAllowed.hidden && (
+              <div
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs transition-all ${
+                  voteMetrics.catsAllowed.confidenceScore < 60
+                    ? "border-amber-500/30 bg-amber-500/5 text-amber-500"
+                    : voteMetrics.catsAllowed.upvotes >= 5
+                      ? "border-green-500/30 bg-green-500/5 text-green-700 dark:text-green-400 font-bold"
+                      : "border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
+                }`}
+              >
+                <span>
+                  🐱 Cats Allowed {voteMetrics.catsAllowed.upvotes >= 5 && "⭐"}{" "}
+                  ({voteMetrics.catsAllowed.confidenceScore}%)
+                </span>
+
+                <div className="ml-1 flex items-center border-l border-zinc-300 dark:border-zinc-700 pl-1.5 gap-1 text-[10px]">
+                  <button
+                    onClick={() => submitAmenityVote("catsAllowed", true)}
+                    className={`transition-colors ${voteMetrics.catsAllowed.userVote === true ? "text-green-500" : "hover:text-green-500"}`}
+                  >
+                    👍
+                  </button>
+                  <button
+                    onClick={() => submitAmenityVote("catsAllowed", false)}
+                    className={`transition-colors ${voteMetrics.catsAllowed.userVote === false ? "text-red-500" : "hover:text-red-500"}`}
+                  >
+                    👎
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Noise profile badge */}
             {venue.noiseLevel && (
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs text-zinc-700 dark:text-zinc-300">
@@ -829,23 +956,25 @@ export function VenueCard({
                 <span>Wireless</span>
               </div>
             )}
-          {venue.hasOutlets && venue.outletDensity && venue.outletDensity !== "none" && (
-            <div className="flex items-center gap-1 text-xs text-zinc-700 dark:text-zinc-300">
-              <span>
-                {venue.outletDensity === "every_table" && "🔋 Every Table"}
-                {venue.outletDensity === "some_tables" && "🔌 Some Tables"}
-                {venue.outletDensity === "wall_seats" && "🔌 Wall Seats Only"}
-              </span>
-            </div>
-          )}
+          {venue.hasOutlets &&
+            venue.outletDensity &&
+            venue.outletDensity !== "none" && (
+              <div className="flex items-center gap-1 text-xs text-zinc-700 dark:text-zinc-300">
+                <span>
+                  {venue.outletDensity === "every_table" && "🔋 Every Table"}
+                  {venue.outletDensity === "some_tables" && "🔌 Some Tables"}
+                  {venue.outletDensity === "wall_seats" && "🔌 Wall Seats Only"}
+                </span>
+              </div>
+            )}
           {venue.outletLocations && venue.outletLocations.length > 0 && (
             <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-              <span>🗺️ {venue.outletLocations.map(l => l.replace('_', ' ')).join(', ')}</span>
-            </div>
-          )}
-          {venue.petsAllowedIndoors && (
-            <div className="flex items-center gap-1 text-xs text-zinc-700 dark:text-zinc-300">
-              <span>🐶 Pets Allowed</span>
+              <span>
+                🗺️{" "}
+                {venue.outletLocations
+                  .map((l) => l.replace("_", " "))
+                  .join(", ")}
+              </span>
             </div>
           )}
 
