@@ -96,7 +96,6 @@ export default function CollectionsPage() {
     e.preventDefault();
     e.stopPropagation();
     try {
-      // Optimistic state toggle
       setPublicFolders((prev) =>
         prev.map((f) => {
           if (f.id === folderId) {
@@ -121,11 +120,7 @@ export default function CollectionsPage() {
         setPublicFolders((prev) =>
           prev.map((f) => {
             if (f.id === folderId) {
-              return {
-                ...f,
-                hasUpvoted: data.hasUpvoted,
-                upvotes: data.upvotes,
-              };
+              return { ...f, hasUpvoted: data.hasUpvoted, upvotes: data.upvotes };
             }
             return f;
           }),

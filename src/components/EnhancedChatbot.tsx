@@ -311,7 +311,7 @@ export function EnhancedChatbot({
   };
 
   // Conversations
-  async function loadConversations() {
+  const loadConversations = useCallback(async () => {
     try {
       const res = await fetch("/api/conversations");
       if (res.ok) {
@@ -330,7 +330,7 @@ export function EnhancedChatbot({
     } catch (e) {
       console.error("Failed to load conversations:", e);
     }
-  }
+  }, []);
 
   const createConversation = async (): Promise<string | null> => {
     if (!isSignedIn) return null;
@@ -439,7 +439,7 @@ export function EnhancedChatbot({
     };
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
-  }, [isSignedIn]);
+  }, [isSignedIn, loadConversations]);
 
   const startNewChat = () => {
     setCurrentConversationId(null);
@@ -448,7 +448,7 @@ export function EnhancedChatbot({
   };
 
   // Favorites
-  async function loadFavorites() {
+  const loadFavorites = useCallback(async () => {
     try {
       const res = await fetch("/api/favorites");
       if (res.ok) {
@@ -462,7 +462,7 @@ export function EnhancedChatbot({
     } catch (e) {
       console.error("Failed to load favorites:", e);
     }
-  }
+  }, []);
 
   // Load conversations & favorites on sign-in
   useEffect(() => {
@@ -470,7 +470,7 @@ export function EnhancedChatbot({
       loadConversations();
       loadFavorites();
     }
-  }, [isSignedIn]);
+  }, [isSignedIn, loadConversations, loadFavorites]);
 
   const handleToggleFavorite = async (venue: Venue) => {
     if (!isSignedIn) {
@@ -904,13 +904,7 @@ export function EnhancedChatbot({
         const finalMsg = prev.find((m) => m.id === assistantMessageId);
         if (finalMsg && socket && roomId) {
           socket.send(
-            JSON.stringify({
-              type: "cursor",
-              x: e.clientX,
-              y: e.clientY,
-              name: user?.firstName || "Anonymous",
-              avatar: isSignedIn ? "👤" : guestAvatar,
-            }),
+            JSON.stringify({ type: "new-message", message: finalMsg }),
           );
         }
         return prev;
