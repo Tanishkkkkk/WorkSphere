@@ -35,6 +35,18 @@ const THEME_INIT_SCRIPT = `
   } catch {}
 
   try {
+    var accentStored = localStorage.getItem("worksphere-accent");
+    var accentColors = {
+      blue: "#3b82f6",
+      purple: "#a855f7",
+      emerald: "#10b981",
+      amber: "#f59e0b"
+    };
+    var accent = accentColors[accentStored] || accentColors.blue;
+    document.documentElement.style.setProperty("--primary-accent", accent);
+  } catch {}
+
+  try {
     window.addEventListener("error", function (event) {
       if (
         event.message &&
@@ -112,8 +124,17 @@ export default async function RootLayout({
   const theme: "light" | "dark" =
     storedTheme === "dark" || storedTheme === "light" ? storedTheme : "light";
 
+  const storedAccent = cookieStore.get("worksphere-accent")?.value;
+  const accent: "blue" | "purple" | "emerald" | "amber" =
+    storedAccent === "blue" ||
+    storedAccent === "purple" ||
+    storedAccent === "emerald" ||
+    storedAccent === "amber"
+      ? storedAccent
+      : "blue";
+
   const appContent = (
-    <ThemeProvider initialTheme={theme}>
+    <ThemeProvider initialTheme={theme} initialAccent={accent}>
       <SoundProvider>
         <I18nProvider>{children}</I18nProvider>
       </SoundProvider>
@@ -129,7 +150,7 @@ export default async function RootLayout({
         publishableKey={publishableKey}
         appearance={{
           elements: {
-            formButtonPrimary: "bg-blue-600 hover:bg-blue-700",
+            formButtonPrimary: "accent-bg hover:opacity-90",
             card: "shadow-xl",
           },
         }}

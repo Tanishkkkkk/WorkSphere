@@ -173,7 +173,7 @@ export default async function VenuePage({ params }: PageProps) {
               )}
               <Link
                 href={`/dashboard?venue=${venue.id}`}
-                className="w-full flex items-center justify-center py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-blue-600/20 active:scale-[0.98]"
+                className="w-full flex items-center justify-center py-4 rounded-2xl accent-bg hover:opacity-90 text-white font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-[var(--primary-accent)]/20 active:scale-[0.98]"
               >
                 Open in WorkSphere
               </Link>
