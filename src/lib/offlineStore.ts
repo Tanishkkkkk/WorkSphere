@@ -1,5 +1,6 @@
 const STORE_NAME = "favorites-outbox";
 const CHECKIN_STORE_NAME = "checkins-outbox";
+export const TAG_STORE_NAME = "favorite-tags-outbox";
 const DB_NAME = "WorkSphereOfflineDB";
 
 /**
@@ -96,7 +97,7 @@ function showPrivateBrowsingAlert() {
   );
 }
 
-function getDB(): Promise<IDBDatabase> {
+export function getDB(): Promise<IDBDatabase> {
   // Guard: IndexedDB is not available in SSR / Node environments.
   // Checking `indexedDB` directly (rather than `window`) ensures that
   // contexts such as Service Workers — which expose indexedDB without a
@@ -121,7 +122,7 @@ function getDB(): Promise<IDBDatabase> {
   // Slow path — first caller: open the database and cache the Promise.
   dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
     try {
-      const request = indexedDB.open(DB_NAME, 2);
+      const request = indexedDB.open(DB_NAME, 3);
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
@@ -133,6 +134,12 @@ function getDB(): Promise<IDBDatabase> {
         }
         if (!db.objectStoreNames.contains(CHECKIN_STORE_NAME)) {
           db.createObjectStore(CHECKIN_STORE_NAME, {
+            keyPath: "id",
+            autoIncrement: true,
+          });
+        }
+        if (!db.objectStoreNames.contains(TAG_STORE_NAME)) {
+          db.createObjectStore(TAG_STORE_NAME, {
             keyPath: "id",
             autoIncrement: true,
           });
