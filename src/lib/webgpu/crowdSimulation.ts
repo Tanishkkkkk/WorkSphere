@@ -178,6 +178,7 @@ export class CrowdSimulationEngine {
   private heatmapPipeline: GPURenderPipeline | null = null;
   private heatmapBindGroup: GPUBindGroup | null = null;
   private heatmapTexture: GPUTexture | null = null;
+  private densityBindGroup: GPUBindGroup | null = null;
   private maxDensity = 1;
   private readonly DENSITY_GRID_SIZE = 64;
 
@@ -441,6 +442,51 @@ export class CrowdSimulationEngine {
       0,
       AGENT_INDICES as unknown as BufferSource,
     );
+
+    // ── Density heatmap buffers ──
+    const gridCells = this.DENSITY_GRID_SIZE * this.DENSITY_GRID_SIZE;
+
+    this.densityBuffer = this.device.createBuffer({
+      size: gridCells * 4,
+      usage: BufferUsage.STORAGE | BufferUsage.COPY_SRC | BufferUsage.COPY_DST,
+    });
+
+    this.densityUniformBuffer = this.device.createBuffer({
+      size: 32,
+      usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST,
+    });
+
+    this.heatmapUniformBuffer = this.device.createBuffer({
+      size: 16,
+      usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST,
+    });
+
+    const texUsage =
+      typeof GPUTextureUsage !== "undefined"
+        ? GPUTextureUsage
+        : {
+            TEXTURE_BINDING: 0x0004,
+            COPY_DST: 0x0002,
+            COPY_SRC: 0x0001,
+            RENDER_ATTACHMENT: 0x0010,
+          };
+
+    this.densityTexture = this.device.createTexture({
+      size: [this.DENSITY_GRID_SIZE, this.DENSITY_GRID_SIZE],
+      format: "r32float",
+      usage: texUsage.TEXTURE_BINDING | texUsage.COPY_DST | texUsage.COPY_SRC,
+    })!;
+
+    this.heatmapTexture = this.device.createTexture({
+      size: [this.canvas.width, this.canvas.height],
+      format: navigator.gpu?.getPreferredCanvasFormat() ?? "bgra8unorm",
+      usage: texUsage.RENDER_ATTACHMENT | texUsage.TEXTURE_BINDING,
+    });
+
+    this.densitySampler = this.device.createSampler({
+      magFilter: "linear",
+      minFilter: "linear",
+    });
   }
 
   private async createPipelines(format: GPUTextureFormat): Promise<void> {
@@ -689,7 +735,7 @@ export class CrowdSimulationEngine {
         entryPoint: "fs_heatmap",
         targets: [
           {
-            format: navigator.gpu.getPreferredCanvasFormat(),
+            format: navigator.gpu?.getPreferredCanvasFormat() ?? "bgra8unorm",
             blend: {
               color: {
                 srcFactor: "src-alpha",
@@ -710,8 +756,7 @@ export class CrowdSimulationEngine {
       },
     });
 
-    const heatmapBindGroupLayout =
-      this.heatmapPipeline.getBindGroupLayout(0);
+    const heatmapBindGroupLayout = this.heatmapPipeline!.getBindGroupLayout(0);
 
     this.heatmapBindGroup = this.device.createBindGroup({
       layout: heatmapBindGroupLayout,
@@ -890,7 +935,8 @@ export class CrowdSimulationEngine {
       }
 
       // ── Compute Pass: Density accumulation ──
-      const densityPipeline = (this as unknown as { _densityPipeline: unknown })._densityPipeline;
+      const densityPipeline = (this as unknown as { _densityPipeline: unknown })
+        ._densityPipeline;
       if (densityPipeline && this.densityBindGroup) {
         const densityPass = commandEncoder.beginComputePass();
         densityPass.setPipeline(densityPipeline as GPUComputePipeline);
@@ -1014,10 +1060,13 @@ export class CrowdSimulationEngine {
 
       // Cleanup
       depthTexture.destroy();
-      const stagingBuffer = (this as unknown as { _stagingBuffer: GPUBuffer })._stagingBuffer;
+      const stagingBuffer = (this as unknown as { _stagingBuffer: GPUBuffer })
+        ._stagingBuffer;
       if (stagingBuffer) {
         stagingBuffer.destroy();
-        (this as unknown as { _stagingBuffer: GPUBuffer | undefined })._stagingBuffer = undefined;
+        (
+          this as unknown as { _stagingBuffer: GPUBuffer | undefined }
+        )._stagingBuffer = undefined;
       }
 
       // Swap ping-pong buffers
@@ -1034,7 +1083,12 @@ export class CrowdSimulationEngine {
   }
 
   private updateDensityUniforms(): void {
-    if (!this.device || !this.densityUniformBuffer || !this.heatmapUniformBuffer) return;
+    if (
+      !this.device ||
+      !this.densityUniformBuffer ||
+      !this.heatmapUniformBuffer
+    )
+      return;
 
     const p = this.config;
     this.device.queue.writeBuffer(
@@ -1070,7 +1124,8 @@ export class CrowdSimulationEngine {
   private updateDensityBindGroup(): void {
     if (!this.device || !this.densityBindGroup) return;
 
-    const densityPipeline = (this as unknown as { _densityPipeline: unknown })._densityPipeline;
+    const densityPipeline = (this as unknown as { _densityPipeline: unknown })
+      ._densityPipeline;
     if (!densityPipeline) return;
 
     const densityBindGroupLayout = (
